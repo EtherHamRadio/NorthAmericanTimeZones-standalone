@@ -39,10 +39,10 @@ button{font:600 .9rem var(--ffb);color:var(--fg);background:var(--cd);border:1px
 button:hover{border-color:var(--mu)}
 /* map */
 #map{background:#0e1621;border-radius:6px;width:100%;height:calc(100vh - 11.5rem);min-height:320px;display:block}
-#map text{font-family:var(--ffb);font-weight:600;font-size:calc(14.4px*var(--ms));fill:#f1f4f7;paint-order:stroke;stroke:#0e1621;stroke-width:3.6px;pointer-events:none;font-variant-numeric:tabular-nums}
-#map .tm{font-size:calc(18px*var(--ms))}#map .tu{font-size:calc(14.4px*var(--ms));font-weight:500}
+#map text{font-family:var(--ffb);font-weight:600;font-size:calc(14.4px*var(--ms)*var(--lz,1));fill:#f1f4f7;paint-order:stroke;stroke:#0e1621;stroke-width:calc(3.6px*var(--lz,1));pointer-events:none;font-variant-numeric:tabular-nums}
+#map .tm{font-size:calc(18px*var(--ms)*var(--lz,1))}#map .tu{font-size:calc(14.4px*var(--ms)*var(--lz,1));font-weight:500}
 #map .hm{fill:#ffd24a}
-#map .td{font-size:calc(13px*var(--ms));font-weight:700;fill:#ffd24a}
+#map .td{font-size:calc(13px*var(--ms)*var(--lz,1));font-weight:700;fill:#ffd24a}
 #msg{color:#c0504d;margin:8px 0}
 #diag{font:.8rem system-ui,sans-serif;opacity:.75;margin:4px 0 8px}
 #leg{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:.6rem 0;color:var(--mu);font-size:.95rem}
@@ -251,6 +251,12 @@ const VIEWS={all:['All three countries',['ca','us','mx']],caus:['Canada + United
 const FIT={ca:[[-141,60],[-141,69.6],[-52.6,47.5],[-66,43.5],[-123.3,48.3],[-95,49]],caN:[[-100,80]],caT:[[-125,70],[-80,70]],
  ak:[[-168,54],[-168,65.5],[-141,70.3],[-130,55]],akT:[[-158,57],[-156,71],[-141,69.6],[-130,55]],l48:[[-124.7,48.4],[-67,44.9],[-80.1,25.1],[-117.1,32.5],[-97.4,25.9],[-95,49.4]],pr:[[-64.3,17.4]],
  mx:[[-117.1,32.5],[-86.7,21.2],[-92.2,14.5],[-109.4,22.9],[-97.1,25.9],[-106.5,31.8]]};
+// Label zoom: labels keep their original size when the land is drawn at least as large as the original 960x720
+// all-countries map, and shrink in step with the land when it is drawn smaller (e.g. all three countries on a wide, short window).
+// zoom is measured as the drawn length of a fixed stretch of land (Kansas City to Denver), so any projection compares fairly
+const SPAN=pr=>{const a=pr([-94.6,39.1]),b=pr([-105,39.7]);return Math.hypot(a[0]-b[0],a[1]-b[1])};
+const REF_SPAN=SPAN(d3.geoAlbers().rotate([96,0]).center([0,55]).parallels([40,65]).fitExtent([[10,10],[950,710]],{type:'MultiPoint',coordinates:[[-168,54],[-52,47],[-124,32],[-80,25],[-100,80],[-92,14.5],[-117,23],[-64.3,17.4]]}));
+let LZ=1;
 const viewOf=()=>VIEWS[S.view]?S.view:'all';
 const SHOWN=()=>{const v=VIEWS[viewOf()][1];return{ca:v.includes('ca'),us:v.includes('us'),mx:v.includes('mx')}};
 function fitPoints(){const v=viewOf(),sh=SHOWN(),pts=[];
@@ -269,6 +275,7 @@ try{
  const PC={CAN:'ca',USA:'us',MEX:'mx'},on=f=>SH[PC[f.properties.adm0_a3]];
  const proj=(v=='mx'?d3.geoAlbers().rotate([102,0]).center([0,23]).parallels([17,30]):v=='l48'?d3.geoAlbers().rotate([96,0]).center([0,38]).parallels([29.5,45.5]):d3.geoAlbers().rotate([96,0]).center([0,55]).parallels([40,65]))
   .fitExtent([[14,14],[W-14,H-14]],fitPoints());
+ LZ=Math.max(.55,Math.min(1,SPAN(proj)/REF_SPAN));svg.style('--lz',LZ);
  const path=d3.geoPath(proj);
  const df=svg.append('defs'),pt=df.append('pattern').attr('id','h').attr('width',6).attr('height',6).attr('patternUnits','userSpaceOnUse').attr('patternTransform','rotate(45)');pt.append('rect').attr('width',6).attr('height',3).attr('fill','rgba(0,0,0,.28)');
  const fs=a.features.filter(f=>RG[f.properties.adm0_a3]);
@@ -326,7 +333,7 @@ try{
  if(SH.ca){const nl=gf.nlca;if(nl){const q=pick(nl.fl,c=>c[1]>=52);spots.push({p:q?cen(q):proj([-62,53.5]),mid:13,name:'Labrador',j:VJ.find(v=>v.n.startsWith('Goose Bay'))})}}
  if(SH.us){spots.push({p:[bx[0]+bx[2]/2,bx[1]-42],mid:0,name:'Hawaii',j:J.find(x=>x.g=='HI'),fixed:1});
  const q=proj([-65.6,18.2]);spots.push({p:[q[0],q[1]+26],mid:0,name:'PR & USVI',j:J.find(x=>x.g=='PR')})}
- drawLabels=()=>{lg.selectAll('*').remove();labs=[];const ms=S.ms/100,dy=18*ms;const he=homeEntry();
+ drawLabels=()=>{lg.selectAll('*').remove();labs=[];const ms=S.ms/100*LZ,dy=18*ms;const he=homeEntry();
   spots.forEach(s=>{const y=s.p[1]-(s.fixed?(ms-1)*36:s.mid*ms),t=lg.append('text').attr('x',s.p[0]).attr('y',y).attr('text-anchor','middle');
    if(he&&he===s.j)t.attr('class','hm');
    t.append('tspan').text(s.name);const m=t.append('tspan').attr('class','tm').attr('x',s.p[0]).attr('dy',dy).node(),u=t.append('tspan').attr('class','tu').attr('x',s.p[0]).attr('dy',dy).node(),dn=t.append('tspan').attr('class','td').attr('x',s.p[0]).attr('dy',dy).node();labs.push({j:s.j,m,u,dn})})};
