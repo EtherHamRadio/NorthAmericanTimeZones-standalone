@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>North American Time Zones</title>
 <!--
-  North American Time Zones — standalone edition v1.7 (2026-11-18)
+  North American Time Zones — standalone edition v1.8 (2026-11-18)
   Original page by Vince d'Eon, VE6LK (CC0): https://github.com/vincedeon/NorthAmericanTimeZones
   Standalone edition by Tom Salzer, KJ7T, also CC0. v1.1 additions: full width, UTC clock, home zone highlight, kiosk mode, 12/24-hour option,
-  Mexico, settings panel, fixed-width clocks (v1.2), Puerto Rico and US Virgin Islands on the map (v1.3), +1/−1 day markers (v1.4), credits and licence notes (v1.5), Kenora note updated (v1.6), unknown zones no longer blank the page plus on-page diagnostics (v1.7), and every library and map file baked into this one file (no internet needed).
+  Mexico, settings panel, fixed-width clocks (v1.2), Puerto Rico and US Virgin Islands on the map (v1.3), +1/−1 day markers (v1.4), credits and licence notes (v1.5), Kenora note updated (v1.6), unknown zones no longer blank the page plus on-page diagnostics (v1.7), Map view: country choices, map fills the window and zooms to the countries shown, optional far-north trim, and a Fill option so the map can fill the screen (v1.8), and every library and map file baked into this one file (no internet needed).
   Bundled: D3 7.9.0 and topojson-client 3.1.0 (ISC licence, Mike Bostock), world-atlas 2.0.2 (ISC),
   Natural Earth admin-1 and lakes v5.1.2 (public domain), trimmed to Canada, the US and Mexico.
 -->
@@ -38,11 +38,11 @@ p.s{color:var(--mu);margin:0 0 1rem}
 button{font:600 .9rem var(--ffb);color:var(--fg);background:var(--cd);border:1px solid var(--ln);border-radius:6px;padding:.4rem .8rem;cursor:pointer}
 button:hover{border-color:var(--mu)}
 /* map */
-#map{background:#0e1621;border-radius:6px;width:100%;max-height:calc(100vh - 11.5rem);display:block}
-#map text{font-family:var(--ffb);font-weight:600;font-size:calc(14.4px*var(--ms));fill:#f1f4f7;paint-order:stroke;stroke:#0e1621;stroke-width:3.6px;pointer-events:none;font-variant-numeric:tabular-nums}
-#map .tm{font-size:calc(18px*var(--ms))}#map .tu{font-size:calc(14.4px*var(--ms));font-weight:500}
+#map{background:#0e1621;border-radius:6px;width:100%;height:calc(100vh - 11.5rem);min-height:320px;display:block}
+#map text{font-family:var(--ffb);font-weight:600;font-size:calc(14.4px*var(--ms)*var(--lz,1));fill:#f1f4f7;paint-order:stroke;stroke:#0e1621;stroke-width:calc(3.6px*var(--lz,1));pointer-events:none;font-variant-numeric:tabular-nums}
+#map .tm{font-size:calc(18px*var(--ms)*var(--lz,1))}#map .tu{font-size:calc(14.4px*var(--ms)*var(--lz,1));font-weight:500}
 #map .hm{fill:#ffd24a}
-#map .td{font-size:calc(13px*var(--ms));font-weight:700;fill:#ffd24a}
+#map .td{font-size:calc(13px*var(--ms)*var(--lz,1));font-weight:700;fill:#ffd24a}
 #msg{color:#c0504d;margin:8px 0}
 #diag{font:.8rem system-ui,sans-serif;opacity:.75;margin:4px 0 8px}
 #leg{display:flex;flex-wrap:wrap;gap:.5rem 1rem;margin:.6rem 0;color:var(--mu);font-size:.95rem}
@@ -74,7 +74,7 @@ select{color:var(--fg);background:var(--bg);border:1px solid var(--ln);border-ra
 kbd{border:1px solid var(--ln);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-size:.8rem}
 /* kiosk mode: map fills the window, UTC/home strip on top */
 body.kiosk main{height:100vh;display:flex;flex-direction:column;padding:.6rem .8rem}
-body.kiosk #map{flex:1;min-height:0;max-height:none;height:100%}
+body.kiosk #map{flex:1;min-height:0;height:auto}
 body.kiosk .nk{display:none!important}
 body.kiosk #strip{margin-bottom:.5rem}
 body.kiosk .sc .big{font-size:3.2rem}
@@ -95,10 +95,10 @@ body.kiosk.idle .btns{opacity:0}
 </div>
 <svg id="map" role="img" aria-label="Map of Canada, the United States and Mexico coloured by time zone"></svg>
 <div id="msg"></div><div id="diag"></div><div id="leg" class="nk"></div>
-<h2 class="nk">Canada</h2><div class="g nk" id="ca"></div>
-<h2 class="nk">United States</h2><div class="g nk" id="us"></div>
-<h2 class="nk">Mexico</h2><div class="g nk" id="mx"></div>
-<footer class="nk">Standalone edition v1.7 by Tom Salzer, KJ7T · Original map and time rules by Vince d'Eon, VE6LK · Both CC0 · Boundaries: Natural Earth (public domain) and world-atlas · Libraries: D3, topojson-client (ISC). Sub-zone outlines inside provinces and states are approximate.</footer>
+<h2 class="nk" id="h-ca">Canada</h2><div class="g nk" id="ca"></div>
+<h2 class="nk" id="h-us">United States</h2><div class="g nk" id="us"></div>
+<h2 class="nk" id="h-mx">Mexico</h2><div class="g nk" id="mx"></div>
+<footer class="nk">Standalone edition v1.8 by Tom Salzer, KJ7T · Original map and time rules by Vince d'Eon, VE6LK · Both CC0 · Boundaries: Natural Earth (public domain) and world-atlas · Libraries: D3, topojson-client (ISC). Sub-zone outlines inside provinces and states are approximate.</footer>
 </main>
 
 <dialog id="dlg"><form method="dialog">
@@ -111,10 +111,15 @@ body.kiosk.idle .btns{opacity:0}
  <label for="s-theme">Page theme</label><select id="s-theme"><option value="auto">Follow system</option><option value="light">Light</option><option value="dark">Dark</option></select>
  <label for="s-font">Font</label><select id="s-font"></select>
  <label for="s-size">Page text size</label><input id="s-size" type="range" min="70" max="170" step="5">
+ <label for="s-view">Map shows</label><select id="s-view"></select>
+ <div class="hint">The map zooms to fit the countries you pick. Cards for hidden countries are hidden too.</div>
+ <label for="s-arctic">Map edges</label><select id="s-arctic"><option value="1">Show everything</option><option value="0">Trim the far north and western Alaska (bigger map)</option></select>
+ <label for="s-fit">Map fit</label><select id="s-fit"><option value="0">Fit the whole area (may leave empty space)</option><option value="1">Fill the screen (the far north may be cut off)</option></select>
+ <div class="hint">Fill makes the map and its labels bigger on screens that don't match the map's shape. Cropping starts at the top, so the far north goes first.</div>
  <label for="s-ms">Map label size</label><input id="s-ms" type="range" min="70" max="170" step="5">
  <label for="s-kiosk">On startup</label><select id="s-kiosk"><option value="0">Normal page</option><option value="1">Kiosk mode</option></select>
 </div>
-<p class="keys">Keys: <kbd>K</kbd> kiosk on/off · <kbd>F</kbd> full screen · <kbd>S</kbd> settings · <kbd>Esc</kbd> close/exit kiosk.<br>Settings are saved in this browser. URL options also work, e.g. <code>?kiosk=1&amp;h12=1&amp;home=us:P</code></p>
+<p class="keys">Keys: <kbd>K</kbd> kiosk on/off · <kbd>F</kbd> full screen · <kbd>S</kbd> settings · <kbd>Esc</kbd> close/exit kiosk.<br>Settings are saved in this browser. URL options also work, e.g. <code>?kiosk=1&amp;h12=1&amp;home=us:P</code> or <code>?view=caus&amp;arctic=0&amp;fit=1</code></p>
 <div class="dr"><button type="button" id="s-reset">Reset to defaults</button><button value="ok">Done</button></div>
 </form></dialog>
 
@@ -173,13 +178,13 @@ const FONTS={orig:['Original (Georgia + system)','system-ui,-apple-system,"Segoe
  serif:['Serif','Georgia,"Times New Roman",serif','Georgia,"Times New Roman",serif'],
  legible:['Wide and legible (Verdana)','Verdana,Tahoma,"DejaVu Sans",sans-serif','Verdana,Tahoma,"DejaVu Sans",sans-serif'],
  mono:['Monospace','ui-monospace,Consolas,"Cascadia Mono","DejaVu Sans Mono",monospace','ui-monospace,Consolas,"Cascadia Mono","DejaVu Sans Mono",monospace']};
-const DEF={home:'auto',h12:0,secs:1,theme:'auto',font:'orig',size:100,ms:100,kiosk:0},SK='tzmap.settings.v1';
+const DEF={home:'auto',h12:0,secs:1,theme:'auto',font:'orig',size:100,ms:100,kiosk:0,view:'all',arctic:1,fit:0},SK='tzmap.settings.v1';
 let P={...DEF};  // P = saved settings; S = what this visit uses (saved + URL overrides, which are never saved)
 try{Object.assign(P,JSON.parse(localStorage.getItem(SK)||'{}'))}catch(e){}
 let S={...P};
 const Q=new URLSearchParams(location.search);
-for(const k of ['home','theme','font'])if(Q.has(k))S[k]=Q.get(k);
-for(const k of ['h12','secs','kiosk','size','ms'])if(Q.has(k))S[k]=+Q.get(k);
+for(const k of ['home','theme','font','view'])if(Q.has(k))S[k]=Q.get(k);
+for(const k of ['h12','secs','kiosk','size','ms','arctic','fit'])if(Q.has(k))S[k]=+Q.get(k);
 const save=()=>{try{localStorage.setItem(SK,JSON.stringify(P))}catch(e){}};
 
 /* ---------- time helpers ---------- */
@@ -189,7 +194,7 @@ const pad=n=>String(n).padStart(2,'0'),oS=m=>(m<0?'-':'+')+pad(Math.abs(m)/60|0)
 const BAD=new Set(),ERRS=[];
 function note(e){const m=String(e&&e.message||e);if(!ERRS.includes(m)){ERRS.push(m);showDiag()}}
 function showDiag(){const el=document.getElementById('diag');if(!el)return;if(!BAD.size&&!ERRS.length){el.textContent='';return}const ua=navigator.userAgent,b=(ua.match(/(Chrom(?:e|ium)|Firefox|Version)\/[\d.]+/)||[''])[0];
- el.textContent='v1.7 · Browser: '+(b||ua)+' · Computer time zone: '+((()=>{try{return BROWSER_TZ}catch(_){return ''}})()||'unknown')+' · '+(BAD.size?'Zones this browser does not recognise: '+[...BAD].join(', '):'All time zones recognised')+(ERRS.length?' · Errors: '+ERRS.join(' | '):'')}
+ el.textContent='v1.8 · Browser: '+(b||ua)+' · Computer time zone: '+((()=>{try{return BROWSER_TZ}catch(_){return ''}})()||'unknown')+' · '+(BAD.size?'Zones this browser does not recognise: '+[...BAD].join(', '):'All time zones recognised')+(ERRS.length?' · Errors: '+ERRS.join(' | '):'')}
 window.addEventListener('error',ev=>note(ev.message));
 const dtf={},off=(tz,d)=>{const f=dtf[tz]||(dtf[tz]=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'}));const p={};f.formatToParts(d).forEach(x=>p[x.type]=+x.value);return Math.round((Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute)-Math.floor(d/6e4)*6e4)/6e4)};
 function info(e,d){try{return info0(e,d)}catch(err){if(e.m=='i')BAD.add(e.a);note(err);showDiag();return{m:0,st:'n/a',ab:'n/a',t:d,bad:1}}}
@@ -234,25 +239,69 @@ const leg=document.getElementById('leg');for(const g in G)leg.appendChild($('spa
 leg.appendChild($('span',{},'Hatched: clocks never change. Heavy line: international border; mid line: province/state border. Gold outline: your home zone. “+1 day” / “−1 day”: the date there differs from your home zone’s date (from UTC if no home is set).'));
 
 /* ---------- map ---------- */
-const W=960,H=720,svg=d3.select('#map').attr('viewBox',`0 0 ${W} ${H}`);
+/* Map view (v1.8): the map is redrawn to the window's shape and zoomed to the countries chosen in Settings.
+   W stays 960 so label sizes look as before; H follows the window's shape. */
+const W=960,svg=d3.select('#map');let H=720;
 let labs=[],drawLabels=()=>{},drawHome=()=>{};
+// Which countries each view shows, and the points the map is fitted to. 'l48' fits the lower 48 states only.
+const VIEWS={all:['All three countries',['ca','us','mx']],caus:['Canada + United States',['ca','us']],usmx:['United States + Mexico',['us','mx']],
+ us:['United States (with Alaska)',['us']],l48:['United States, lower 48',['us']],ca:['Canada',['ca']],mx:['Mexico',['mx']]};
+const FIT={ca:[[-141,60],[-141,69.6],[-52.6,47.5],[-66,43.5],[-123.3,48.3],[-95,49]],caN:[[-100,80]],caT:[[-125,70],[-80,70]],
+ ak:[[-168,54],[-168,65.5],[-141,70.3],[-130,55]],akT:[[-158,57],[-156,71],[-141,69.6],[-130,55]],l48:[[-124.7,48.4],[-67,44.9],[-80.1,25.1],[-117.1,32.5],[-97.4,25.9],[-95,49.4]],pr:[[-64.3,17.4]],
+ mx:[[-117.1,32.5],[-86.7,21.2],[-92.2,14.5],[-109.4,22.9],[-97.1,25.9],[-106.5,31.8]]};
+// Label zoom: labels keep their original size when the land is drawn at least as large as the original 960x720
+// all-countries map, and shrink in step with the land when it is drawn smaller (e.g. all three countries on a wide, short window).
+// zoom is measured as the drawn length of a fixed stretch of land (Kansas City to Denver), so any projection compares fairly
+const SPAN=pr=>{const a=pr([-94.6,39.1]),b=pr([-105,39.7]);return Math.hypot(a[0]-b[0],a[1]-b[1])};
+const REF_SPAN=SPAN(d3.geoAlbers().rotate([96,0]).center([0,55]).parallels([40,65]).fitExtent([[10,10],[950,710]],{type:'MultiPoint',coordinates:[[-168,54],[-52,47],[-124,32],[-80,25],[-100,80],[-92,14.5],[-117,23],[-64.3,17.4]]}));
+let LZ=1;
+const viewOf=()=>VIEWS[S.view]?S.view:'all';
+const SHOWN=()=>{const v=VIEWS[viewOf()][1];return{ca:v.includes('ca'),us:v.includes('us'),mx:v.includes('mx')}};
+function fitPoints(){const v=viewOf(),sh=SHOWN(),pts=[];
+ if(sh.ca)pts.push(...FIT.ca,...(S.arctic?FIT.caN:FIT.caT));
+ if(sh.us){pts.push(...FIT.l48);if(v!='l48')pts.push(...(S.arctic?FIT.ak:FIT.akT),...FIT.pr)}
+ if(sh.mx)pts.push(...FIT.mx);
+ return{type:'MultiPoint',coordinates:pts}}
+// Fill zooms no further than keeps these label positions on screen
+const KEEP={ca:[[-136,63.5],[-117,64.5],[-84,66.5],[-61,54],[-56.5,48.5],[-127,54],[-63,46]],ak:[[-152,64]],l48:[[-121,38],[-80,27.5],[-70,44.5]],
+ mx:[[-112,29],[-104,24],[-99,19.5],[-89,19]]};
+function keepPoints(){const v=viewOf(),sh=SHOWN(),k=[];if(sh.ca)k.push(...KEEP.ca);if(sh.us){k.push(...KEEP.l48);if(v!='l48')k.push(...KEEP.ak)}if(sh.mx)k.push(...KEEP.mx);return k}
 const RG={CAN:'ca',USA:'us',MEX:'mx'};
 const grp=f=>{const p=f.properties,c=p.postal;if(p.adm0_a3=='CAN')return(CA.find(r=>r[6]==c)||[])[2];if(p.adm0_a3=='USA')return Object.keys(US).find(g=>US[g].split(' ').includes(c));if(p.adm0_a3=='MEX')return Object.keys(MXS).find(g=>MXS[g].split(' ').includes(c))||'mxC'};
+function drawMap(){
+ svg.selectAll('*').remove();labs=[];drawLabels=()=>{};drawHome=()=>{};VJ.forEach(v=>{v.pe=null;v.d=null;v.cp=null});
+ const box=svg.node(),cw=box.clientWidth||960,ch=box.clientHeight||720;H=Math.max(240,Math.round(W*ch/cw));svg.attr('viewBox',`0 0 ${W} ${H}`);
+ document.getElementById('msg').textContent='';
 try{
- const w=WORLD,a=ADMIN,lk=LAKES;
- const proj=d3.geoAlbers().rotate([96,0]).center([0,55]).parallels([40,65]).fitExtent([[10,10],[W-10,H-10]],{type:'MultiPoint',coordinates:[[-168,54],[-52,47],[-124,32],[-80,25],[-100,80],[-92,14.5],[-117,23],[-64.3,17.4]]});
+ const w=WORLD,a=ADMIN,lk=LAKES,SH=SHOWN(),v=viewOf();
+ const PC={CAN:'ca',USA:'us',MEX:'mx'},on=f=>SH[PC[f.properties.adm0_a3]];
+ const proj=(v=='mx'?d3.geoAlbers().rotate([102,0]).center([0,23]).parallels([17,30]):v=='l48'?d3.geoAlbers().rotate([96,0]).center([0,38]).parallels([29.5,45.5]):d3.geoAlbers().rotate([96,0]).center([0,55]).parallels([40,65]))
+  .fitExtent([[14,14],[W-14,H-14]],fitPoints());
+ /* Fill (v1.8): zoom until the chosen area covers the frame instead of fitting inside it. When the frame is wider than
+    the area, the extra height is cut from the top (empty far north first) so the southern edge stays in view; when it is
+    taller, the sides are cut evenly. Left to right, the map is centred on its labels rather than its outline. The zoom stops before any time-zone label would leave the frame (KEEP points sit
+    where the labels go), and is capped at 1.6x. */
+ if(+S.fit){const b=d3.geoPath(proj).bounds(fitPoints()),bw=b[1][0]-b[0][0],bh=b[1][1]-b[0][1],aw=W-28,ah=H-28,wide=aw/bw>ah/bh,
+   t=proj.translate(),kx=keepPoints().map(c=>(proj(c)||[])[0]).filter(x=>x!=null),ax=(Math.min(...kx)+Math.max(...kx))/2,ay=wide?b[1][1]:(b[0][1]+b[1][1])/2,fx=W/2,fy=wide?H-14:H/2,
+   m=S.ms/100,mx=46*m,mt=22*m,mb=62*m;
+  let k=Math.min(1.6,Math.max(aw/bw,ah/bh)/Math.min(aw/bw,ah/bh));
+  keepPoints().forEach(c=>{const q=proj(c);if(!q)return;const dx=q[0]-ax,dy=q[1]-ay;
+   if(dx>0)k=Math.min(k,(W-mx-fx)/dx);if(dx<0)k=Math.min(k,(fx-mx)/-dx);
+   if(dy<0)k=Math.min(k,(fy-mt)/-dy);if(dy>0)k=Math.min(k,(H-mb-fy)/dy)});
+  if(k>1.001)proj.scale(proj.scale()*k).translate([fx+k*(t[0]-ax),fy+k*(t[1]-ay)])}
+ LZ=Math.max(.55,Math.min(1,SPAN(proj)/REF_SPAN));svg.style('--lz',LZ);
  const path=d3.geoPath(proj);
  const df=svg.append('defs'),pt=df.append('pattern').attr('id','h').attr('width',6).attr('height',6).attr('patternUnits','userSpaceOnUse').attr('patternTransform','rotate(45)');pt.append('rect').attr('width',6).attr('height',3).attr('fill','rgba(0,0,0,.28)');
  const fs=a.features.filter(f=>RG[f.properties.adm0_a3]);
  const main=fs.filter(f=>f.properties.postal!='HI'||f.properties.adm0_a3!='USA');
  const gm=svg.append('g');
- gm.selectAll('path').data(main).join('path').attr('d',path).attr('fill',f=>{const g=grp(f);return g?G[g][0]:'#232b36'}).attr('stroke','rgba(255,255,255,.4)').attr('stroke-width',.6).append('title').text(f=>f.properties.name);
- gm.selectAll('.hh').data(main.filter(f=>{const g=grp(f);return g&&G[g][1]})).join('path').attr('d',path).attr('fill','url(#h)').attr('pointer-events','none');
+ gm.selectAll('path').data(main).join('path').attr('d',path).attr('fill',f=>{const g=grp(f);return g&&on(f)?G[g][0]:'#232b36'}).attr('stroke','rgba(255,255,255,.4)').attr('stroke-width',.6).append('title').text(f=>f.properties.name);
+ gm.selectAll('.hh').data(main.filter(f=>{const g=grp(f);return g&&G[g][1]&&on(f)})).join('path').attr('d',path).attr('fill','url(#h)').attr('pointer-events','none');
  // Great Lakes painted over the state/province fills (admin-1 polygons include the lake waters)
  svg.append('g').selectAll('path').data(lk.features).join('path').attr('d',path).attr('fill','#16314a').attr('stroke','rgba(255,255,255,.35)').attr('stroke-width',.5);
  // sub-zone dividers inside a province/state
  const pp=r=>'M'+r.map(c=>proj(c).map(n=>n.toFixed(1)).join(',')).join('L')+'Z';
- VJ.forEach((v,i)=>{const m=VM[v.n];if(!m)return;
+ VJ.forEach((v,i)=>{const m=VM[v.n];if(!m||!SH[PC[m[0].split(':')[0]]])return;
   const pfs=m[0].split('|').map(s=>{const[cc,pc]=s.split(':');return fs.find(f=>f.properties.adm0_a3==cc&&f.properties.postal==pc)}).filter(Boolean);if(!pfs.length)return;
   df.append('clipPath').attr('id','cp'+i).selectAll('path').data(pfs).join('path').attr('d',path);
   const g=svg.append('g').attr('clip-path','url(#cp'+i+')'),d=m.slice(1).map(pp).join('');
@@ -266,16 +315,16 @@ try{
  // Hawaii inset
  // main islands only (the far-west atolls would shrink the inset to nothing)
  const hi=fs.filter(f=>f.properties.adm0_a3=='USA'&&f.properties.postal=='HI').map(f=>({...f,geometry:{type:'MultiPolygon',coordinates:(f.geometry.type=='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates).filter(p=>p[0][0][0]>-161)}})),bx=[12,H-76,96,62],p2=d3.geoMercator().fitExtent([[bx[0]+4,bx[1]+4],[bx[0]+bx[2]-4,bx[1]+bx[3]-4]],{type:'FeatureCollection',features:hi}),hpath=d3.geoPath(p2);
- svg.append('rect').attr('x',bx[0]).attr('y',bx[1]).attr('width',bx[2]).attr('height',bx[3]).attr('fill','none').attr('stroke','#e6ebf0').attr('stroke-dasharray','4 2');
+ if(SH.us){svg.append('rect').attr('x',bx[0]).attr('y',bx[1]).attr('width',bx[2]).attr('height',bx[3]).attr('fill','none').attr('stroke','#e6ebf0').attr('stroke-dasharray','4 2');
  svg.selectAll('.hi').data(hi).join('path').attr('d',hpath).attr('fill',G.HI[0]).attr('stroke','rgba(255,255,255,.4)').attr('stroke-width',.6);
- svg.append('path').datum({type:'FeatureCollection',features:hi}).attr('d',hpath).attr('fill','url(#h)');
+ svg.append('path').datum({type:'FeatureCollection',features:hi}).attr('d',hpath).attr('fill','url(#h)')}
  // US Caribbean territories (Puerto Rico, US Virgin Islands): drawn from the countries file, where they are separate entries
  const terr=topojson.feature(w,w.objects.countries).features.filter(f=>['Puerto Rico','U.S. Virgin Is.'].includes(f.properties.name));
- svg.selectAll('.pr').data(terr).join('path').attr('d',path).attr('fill',G.PR[0]).attr('stroke','rgba(255,255,255,.6)').attr('stroke-width',.6).append('title').text(f=>f.properties.name);
- svg.selectAll('.prh').data(terr).join('path').attr('d',path).attr('fill','url(#h)').attr('pointer-events','none');
+ svg.selectAll('.pr').data(terr).join('path').attr('d',path).attr('fill',SH.us?G.PR[0]:'#232b36').attr('stroke','rgba(255,255,255,.6)').attr('stroke-width',.6).append('title').text(f=>f.properties.name);
+ svg.selectAll('.prh').data(SH.us?terr:[]).join('path').attr('d',path).attr('fill','url(#h)').attr('pointer-events','none');
  // home-zone outline layer, then labels on top
  const hg=svg.append('g').attr('pointer-events','none'),lg=svg.append('g');
- drawHome=()=>{hg.selectAll('*').remove();const e=homeEntry();if(!e)return;
+ drawHome=()=>{hg.selectAll('*').remove();const e=homeEntry();if(!e)return;const er=e.r||(J.find(x=>x.k==e.pk)||{}).r;if(er&&!SH[er])return;
   const ln=s=>s.attr('fill','none').attr('stroke','#ffd24a').attr('stroke-width',2.6).attr('stroke-linejoin','round');
   if(e.id.startsWith('v:')){if(e.d)ln(hg.append('g').attr('clip-path','url(#'+e.cp+')').append('path').attr('d',e.d));return}
   if(e.g=='HI'){ln(hg.selectAll('.x').data(hi).join('path').attr('d',hpath));return}
@@ -288,22 +337,39 @@ try{
  const pick=(fl,test)=>{let b=null,ba=-1;fl.forEach(f=>polys(f).forEach(q=>{if(!test(d3.geoCentroid(q)))return;const a=path.area(q);if(a>ba){ba=a;b=q}}));return b};
  const cen=q=>{let p=path.centroid(q);if(!d3.geoContains(q,proj.invert(p))){const[[x0,y0],[x1,y1]]=path.bounds(q);p=[(x0+x1)/2,(y0+y1)/2]}return p};
  const spots=[];
- for(const k in gf){const{g,r,nu,fl}=gf[k];if(nu)continue;let sx=0,sy=0,sa=0;fl.forEach(f=>{const a=path.area(f),q=path.centroid(f);sx+=q[0]*a;sy+=q[1]*a;sa+=a});let p=[sx/sa,sy/sa];
+ for(const k in gf){const{g,r,nu,fl}=gf[k];if(nu||!SH[r])continue;let sx=0,sy=0,sa=0;fl.forEach(f=>{const a=path.area(f),q=path.centroid(f);sx+=q[0]*a;sy+=q[1]*a;sa+=a});let p=[sx/sa,sy/sa];
   if(!fl.some(f=>d3.geoContains(f,proj.invert(p))))p=path.centroid(fl.reduce((m,f)=>path.area(f)>path.area(m)?f:m));
   let q=null;if(g=='nl')q=pick(fl,c=>c[1]<52&&c[0]>-59.5);else if(g=='nwt')q=pick(fl,()=>true);
   if(q)p=cen(q);else if(g=='nl')p=proj([-56,48.7]);else if(g=='nwt')p=proj([-121,64.5]);
   if(g=='mxN')p=proj([-119.2,29.2]);if(g=='mxS')p=proj([-88.2,19.6]);if(g=='mxP')p=proj([-109.6,28.0]); // Noroeste label sits offshore, west of Baja
-  spots.push({p,mid:(g=='nl'||g=='nwt')?13:0,name:ML[g],j:J.find(x=>x.g==g&&x.r==r)})}
- {const nk=Object.keys(gf).find(k=>gf[k].nu);if(nk){const q=pick(gf[nk].fl,c=>c[0]>-90);spots.push({p:q?cen(q):proj([-72,68]),mid:13,name:'NUT',j:J.find(x=>x.code=='NU')})}}
- {const nl=gf.nlca;if(nl){const q=pick(nl.fl,c=>c[1]>=52);spots.push({p:q?cen(q):proj([-62,53.5]),mid:13,name:'Labrador',j:VJ.find(v=>v.n.startsWith('Goose Bay'))})}}
- spots.push({p:[bx[0]+bx[2]/2,bx[1]-42],mid:0,name:'Hawaii',j:J.find(x=>x.g=='HI'),fixed:1});
- {const q=proj([-65.6,18.2]);spots.push({p:[q[0],q[1]+26],mid:0,name:'PR & USVI',j:J.find(x=>x.g=='PR')})}
- drawLabels=()=>{lg.selectAll('*').remove();labs=[];const ms=S.ms/100,dy=18*ms;const he=homeEntry();
-  spots.forEach(s=>{const y=s.p[1]-(s.fixed?(ms-1)*36:s.mid*ms),t=lg.append('text').attr('x',s.p[0]).attr('y',y).attr('text-anchor','middle');
+  spots.push({p,mid:(g=='nl'||g=='nwt')?13:0,name:ML[g],j:J.find(x=>x.g==g&&x.r==r),stag:(g=='abt'||g=='mb')?-1.7:0})}
+ if(SH.ca){const nk=Object.keys(gf).find(k=>gf[k].nu);if(nk){const q=pick(gf[nk].fl,c=>c[0]>-90);spots.push({p:q?cen(q):proj([-72,68]),mid:13,name:'NUT',j:J.find(x=>x.code=='NU')})}}
+ if(SH.ca){const nl=gf.nlca;if(nl){const q=pick(nl.fl,c=>c[1]>=52);spots.push({p:q?cen(q):proj([-62,53.5]),mid:13,name:'Labrador',j:VJ.find(v=>v.n.startsWith('Goose Bay'))})}}
+ if(SH.us){spots.push({p:[bx[0]+bx[2]/2,bx[1]-42],mid:0,name:'Hawaii',j:J.find(x=>x.g=='HI'),fixed:1});
+ const q=proj([-65.6,18.2]);spots.push({p:[q[0],q[1]+26],mid:0,name:'PR & USVI',j:J.find(x=>x.g=='PR')})}
+ drawLabels=()=>{lg.selectAll('*').remove();labs=[];const ms=S.ms/100*LZ,dy=18*ms;const he=homeEntry();
+  // zoomed out, the four narrow Prairie labels collide: lift ABT and MBT (both provinces have room to the north)
+  spots.forEach(s=>{let y=s.p[1]-(s.fixed?(ms-1)*36:s.mid*ms)+(LZ<1&&s.stag?s.stag*dy:0),x=s.p[0];
+   // a zone whose label point is off the map (e.g. Alaska in the lower-48 view) gets no label; one near an edge is
+   // pulled back inside so no label is cut off (PR & USVI at the bottom, Noroeste on the left)
+   if(!s.fixed&&(s.p[0]<0||s.p[0]>W||s.p[1]<0||s.p[1]>H))return;
+   x=Math.max(40*ms,Math.min(W-40*ms,x));y=Math.max(16*ms,Math.min(H-dy*3-6,y));
+   const t=lg.append('text').attr('x',x).attr('y',y).attr('text-anchor','middle');
    if(he&&he===s.j)t.attr('class','hm');
-   t.append('tspan').text(s.name);const m=t.append('tspan').attr('class','tm').attr('x',s.p[0]).attr('dy',dy).node(),u=t.append('tspan').attr('class','tu').attr('x',s.p[0]).attr('dy',dy).node(),dn=t.append('tspan').attr('class','td').attr('x',s.p[0]).attr('dy',dy).node();labs.push({j:s.j,m,u,dn})})};
+   t.append('tspan').text(s.name);const m=t.append('tspan').attr('class','tm').attr('x',x).attr('dy',dy).node(),u=t.append('tspan').attr('class','tu').attr('x',x).attr('dy',dy).node(),dn=t.append('tspan').attr('class','td').attr('x',x).attr('dy',dy).node();labs.push({j:s.j,m,u,dn})})};
  drawLabels();drawHome();
 }catch(e){document.getElementById('msg').textContent='Map could not be drawn ('+e.message+'). The clocks below still work.'}
+}
+// show or hide each country's cards and legend entries to match the view
+const GC={ca:'pct yk nwt abt sk mb E atl nl C',us:'P M Z C E AK HI PR GU AS',mx:'mxN mxP mxC mxS M C'};
+function showCountries(){const SH=SHOWN();
+ for(const r of ['ca','us','mx']){document.getElementById(r).style.display=SH[r]?'':'none';document.getElementById('h-'+r).style.display=SH[r]?'':'none'}
+ const keep=new Set(Object.keys(GC).filter(r=>SH[r]).flatMap(r=>GC[r].split(' ')));
+ [...leg.children].forEach((sp,i)=>{const g=Object.keys(G)[i];if(g)sp.style.display=keep.has(g)?'':'none'})}
+// redraw when the window (or kiosk mode) changes the map's shape
+{let rt,lastWH='';const redo=()=>{const b=svg.node(),k=b.clientWidth+'x'+b.clientHeight;if(k==lastWH||!b.clientWidth)return;lastWH=k;drawMap();tick(1)};
+ if(window.ResizeObserver)new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(redo,150)}).observe(svg.node());
+ else window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(redo,150)})}
 
 /* ---------- live update ---------- */
 const utcEl=document.getElementById('utc'),utcD=document.getElementById('utcd'),hTm=document.getElementById('hometm'),hInf=document.getElementById('homeinfo'),hBox=document.getElementById('homebox');
@@ -330,7 +396,7 @@ function apply(){const r=document.documentElement;setTimeout(measureDigits,0);
  if(S.theme=='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',S.theme);
  const f=FONTS[S.font]||FONTS.orig;r.style.setProperty('--ffb',f[1]);r.style.setProperty('--ffd',f[2]);
  r.style.setProperty('--s',S.size/100);r.style.setProperty('--ms',S.ms/100);
- drawLabels();drawHome();tick(1)}
+ showCountries();drawMap();tick(1)}
 
 /* ---------- kiosk mode ---------- */
 let idleT,fsKiosk=false;
@@ -348,10 +414,11 @@ const dlg=document.getElementById('dlg'),el=id=>document.getElementById('s-'+id)
 {const sh=el('home');sh.append($('option',{value:'auto'},'Auto-detect from this computer'),$('option',{value:'none'},'None (hide home clock)'));
  for(const[r,lab]of[['ca','Canada'],['us','United States'],['mx','Mexico']]){const og=$('optgroup',{label:lab});
   J.filter(j=>j.r==r).forEach(j=>{og.append($('option',{value:j.id},j.n));VJ.filter(v=>v.pk==j.k).forEach(v=>og.append($('option',{value:v.id},'  └ '+v.n)))});sh.append(og)}
- const sf=el('font');for(const k in FONTS)sf.append($('option',{value:k},FONTS[k][0]))}
-function fillForm(){el('home').value=S.home;el('h12').value=+S.h12;el('secs').value=+S.secs;el('theme').value=S.theme;el('font').value=S.font;el('size').value=S.size;el('ms').value=S.ms;el('kiosk').value=+S.kiosk;
+ const sf=el('font');for(const k in FONTS)sf.append($('option',{value:k},FONTS[k][0]));
+ const sv=el('view');for(const k in VIEWS)sv.append($('option',{value:k},VIEWS[k][0]))}
+function fillForm(){el('home').value=S.home;el('h12').value=+S.h12;el('secs').value=+S.secs;el('theme').value=S.theme;el('font').value=S.font;el('size').value=S.size;el('ms').value=S.ms;el('kiosk').value=+S.kiosk;el('view').value=viewOf();el('arctic').value=+S.arctic;el('fit').value=+S.fit;
  const d=detectHome();el('det').textContent='This computer reports '+(BROWSER_TZ||'no time zone')+(d?' → '+d.n:' (no match)')}
-for(const k of ['home','h12','secs','theme','font','size','ms','kiosk'])el(k).addEventListener('input',e=>{const v=e.target.value;S[k]=P[k]=['home','theme','font'].includes(k)?v:+v;save();apply()});
+for(const k of ['home','h12','secs','theme','font','size','ms','kiosk','view','arctic','fit'])el(k).addEventListener('input',e=>{const v=e.target.value;S[k]=P[k]=['home','theme','font','view'].includes(k)?v:+v;save();apply()});
 el('reset').onclick=()=>{S={...DEF};P={...DEF};save();fillForm();apply()};
 document.getElementById('bs').onclick=()=>{fillForm();dlg.showModal()};
 
