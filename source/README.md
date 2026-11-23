@@ -1,4 +1,4 @@
-# North American Time Zones — standalone edition v1.6
+# North American Time Zones — standalone edition v1.8
 
 A live time zone map and clock page for Canada, the United States (including Puerto Rico and the US Virgin Islands) and Mexico.
 Original by Vince d'Eon, VE6LK (CC0): https://github.com/vincedeon/NorthAmericanTimeZones
@@ -18,10 +18,22 @@ file, so it runs with no internet connection and no web server. Copy it to any m
   3 seconds. Press `K` (or the Kiosk button) to toggle, `F` for full screen, `Esc` to exit.
 - **Settings** (`S` or the gear button): home zone, 12/24-hour, UTC seconds, light/dark
   theme, font, page text size, map label size, start in kiosk mode. Saved in the browser.
+- **Map shows**: all three countries, Canada + United States, United States + Mexico,
+  United States (with Alaska), United States lower 48, Canada, or Mexico. The map redraws to
+  the window's shape and the labels scale with the zoom.
+- **Map edges**: show everything, or trim the far north and western Alaska for a bigger map.
+- **Map fit**: "Fit the whole area" (default) or "Fill the screen", which zooms until the map
+  fills the window. Extra height is cut from the top (the empty far north first), and the zoom
+  stops before any time zone label would leave the window.
+- **Older browsers**: if the browser doesn't recognise a time zone name, that one clock shows a
+  dash and the others keep running. A short line under the map then names the zone and the
+  browser version. On current browsers the line stays hidden.
 - **URL options** for a single visit (not saved), handy for a dedicated display:
   `time-zones-local.html?kiosk=1&h12=1&home=us:P`
   Keys: `kiosk`, `h12`, `secs`, `theme` (auto/light/dark), `font` (orig/sans/serif/legible/mono),
-  `size` and `ms` (70–170, percent), `home` (auto, none, or an id such as `ca:Alberta`, `us:P`, `mx:mxC`).
+  `size` and `ms` (70–170, percent), `home` (auto, none, or an id such as `ca:Alberta`, `us:P`, `mx:mxC`),
+  `view` (`all`, `caus`, `usmx`, `us`, `l48`, `ca`, `mx`), `arctic` (`1` show everything, `0` trim),
+  `fit` (`0` fit the whole area, `1` fill the screen).
 
 ## Time rules
 
