@@ -2,10 +2,12 @@
 
 A live time zone map and clock for Canada, the United States (including Alaska, Hawaii, Puerto Rico and the US Virgin Islands) and Mexico. It's one HTML file that runs offline in any browser, on Windows, macOS, Linux or a Raspberry Pi.
 
+**See it live:** [etherhamradio.github.io/NorthAmericanTimeZones-standalone/time-zones-local.html](https://etherhamradio.github.io/NorthAmericanTimeZones-standalone/time-zones-local.html)
+
 **This is a fork.** The original map is by **Vince d'Eon, VE6LK**:
 
-- Vince's repository: https://github.com/vincedeon/NorthAmericanTimeZones
-- Vince's live map: https://vincedeon.github.io/NorthAmericanTimeZones/time-zones-local.html
+- Vince's repository: [github.com/vincedeon/NorthAmericanTimeZones](https://github.com/vincedeon/NorthAmericanTimeZones)
+- Vince's live map: [vincedeon.github.io/NorthAmericanTimeZones/time-zones-local.html](https://vincedeon.github.io/NorthAmericanTimeZones/time-zones-local.html)
 
 The standalone edition (v1.7) has been merged into Vince's repository. This fork carries v1.8, which adds map views and a Fill setting on top of that.
 
